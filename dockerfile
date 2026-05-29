@@ -4,9 +4,10 @@ EXPOSE 8080
 
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 WORKDIR /src
-COPY ["NexAuthDb.csproj", "."]
-RUN dotnet restore
+COPY ["NexAuthDb/NexAuthDb.csproj", "NexAuthDb/"]
+RUN dotnet restore "NexAuthDb/NexAuthDb.csproj"
 COPY . .
+WORKDIR "/src/NexAuthDb"
 RUN dotnet publish -c Release -o /app/publish
 
 FROM base AS final
