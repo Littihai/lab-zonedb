@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <title>Get Google ID Token</title>
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <style>
+    body { font-family: sans-serif; max-width: 700px; margin: 60px auto; padding: 20px; background: #f5f5f5; }
+    h2   { color: #333; }
+    pre  { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px;
+           white-space: pre-wrap; word-break: break-all; font-size: 13px; }
+    .box { background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,.1); margin-bottom: 20px; }
+    button { background: #1a73e8; color: white; border: none; padding: 10px 20px;
+             border-radius: 6px; cursor: pointer; font-size: 14px; margin-top: 10px; }
+    button:hover { background: #1557b0; }
+    .success { color: #2e7d32; font-weight: bold; }
+    .label   { font-size: 12px; color: #666; margin-bottom: 6px; }
+  </style>
+</head>
+<body>
+
+<div class="box">
+  <h2>🔑 Get Google ID Token สำหรับทดสอบ API</h2>
+  <p>กด Sign in แล้ว copy token ไปใส่ใน Postman / .http file</p>
+
+  <!-- แก้ CLIENT_ID ตรงนี้ -->
+  <div id="g_id_onload"
+       data-client_id="557742342010-v8k7btdnbkmf5unmi467mf64s755np0d.apps.googleusercontent.com"
+       data-callback="handleCredential"
+       data-auto_prompt="false">
+  </div>
+  <div class="g_id_signin"
+       data-type="standard"
+       data-size="large"
+       data-theme="outline"
+       data-text="signin_with"
+       data-shape="rectangular">
+  </div>
+</div>
+
+<div class="box" id="result" style="display:none">
+  <p class="success">✅ ได้ token แล้ว! Copy ไปใช้ได้เลย</p>
+
+  <div class="label">ID Token (ใช้ส่งไป Backend):</div>
+  <pre id="tokenBox"></pre>
+  <button onclick="copyToken()">📋 Copy Token</button>
+
+  <hr style="margin: 20px 0"/>
+
+  <div class="label">ตัวอย่าง Body สำหรับ POST /api/auth/google-login:</div>
+  <pre id="bodyBox"></pre>
+  <button onclick="copyBody()">📋 Copy Request Body</button>
+
+  <hr style="margin: 20px 0"/>
+
+  <div class="label">ทดสอบด้วย fetch ไปยัง Backend โดยตรง:</div>
+  <button onclick="testApi()">🚀 ทดสอบ API เลย</button>
+  <pre id="apiResult" style="margin-top:10px; display:none"></pre>
+</div>
+
+<script>
+  let currentToken = '';
+
+  function handleCredential(response) {
+    currentToken = response.credential;
+
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('tokenBox').textContent = currentToken;
+    document.getElementById('bodyBox').textContent =
+      JSON.stringify({ idToken: currentToken }, null, 2);
+  }
+
+  function copyToken() {
+    navigator.clipboard.writeText(currentToken);
+    alert('Copied token!');
+  }
+
+  function copyBody() {
+    navigator.clipboard.writeText(JSON.stringify({ idToken: currentToken }));
+    alert('Copied request body!');
+  }
+
+  async function testApi() {
+    const resultEl = document.getElementById('apiResult');
+    resultEl.style.display = 'block';
+    resultEl.textContent = 'กำลังเรียก API...';
+
+    try {
+      const res = await fetch('http://localhost:5245/api/auth/google-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ idToken: currentToken })
+      });
+      const data = await res.json();
+      resultEl.textContent = JSON.stringify(data, null, 2);
+    } catch (e) {
+      resultEl.textContent = 'Error: ' + e.message;
+    }
+  }
+</script>
+
+</body>
+</html>
